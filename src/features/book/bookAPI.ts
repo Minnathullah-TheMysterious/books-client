@@ -99,7 +99,7 @@ export const updateBookById = async (
       toast(error.response.data.message, {
         className: "font-serif bg-blue-900 text-white",
       });
-      console.error(error)
+      console.error(error);
       return {
         success: false,
         message: error.response.data.message,
@@ -109,7 +109,7 @@ export const updateBookById = async (
       toast(error.response.data.message, {
         className: "font-serif bg-blue-900 text-white",
       });
-      console.error(error)
+      console.error(error);
       return {
         success: false,
         message: error.response.data.message,
@@ -117,7 +117,7 @@ export const updateBookById = async (
       };
     } else if (error?.response?.status === 404) {
       toast.error(error.response.data.message);
-      console.error(error)
+      console.error(error);
       return {
         success: false,
         message: error.response.data.message,
@@ -126,7 +126,7 @@ export const updateBookById = async (
     }
 
     toast.error(error.response.data.message);
-    console.error(error)
+    console.error(error);
     return {
       success: false,
       message: error.response.data.message,
@@ -142,19 +142,17 @@ export const fetchAllBooks = async (): Promise<BookResponseData> => {
       "/api/v1/book/fetch-all"
     );
     return response.data;
-  } catch (error) {
-    if (error instanceof Error) {
-      console.error(error.message);
-      toast.error(error.message);
-      return { success: false, message: error.message, books: [] };
-    } else {
-      console.error("An unknown error occurred");
+  } catch (error: any) {
+    if (error?.response?.status === 404) {
+      toast.error(error.response.data.message);
       return {
         success: false,
-        message: "An unknown error occurred",
+        message: error.response.data.message,
         books: [],
       };
     }
+    toast.error(error.message);
+    return { success: false, message: error.message, books: [] };
   }
 };
 
@@ -215,6 +213,14 @@ export const deleteBookById = async (
       toast(error.response.data.message, {
         className: "font-serif bg-blue-900 text-white",
       });
+      return {
+        success: false,
+        message: error.response.data.message,
+      };
+    }
+
+    else if (error?.response?.status === 404) {
+      toast.error(error.response.data.message);
       return {
         success: false,
         message: error.response.data.message,
