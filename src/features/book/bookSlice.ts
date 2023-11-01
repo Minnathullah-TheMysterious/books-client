@@ -3,19 +3,22 @@ import { RootState } from "../../app/store";
 import {
   Book,
   ICreateBook,
+  IPaginationQuery,
   createBook,
   deleteBookById,
   fetchAllBooks,
   fetchBookById,
   searchBookByTitleOrAuthor,
+  searchObj,
   updateBookById,
 } from "./bookAPI";
-import { IUpdateBookParams } from './components/UpdateBook';
+import { IUpdateBookParams } from "./components/UpdateBook";
 
 export interface BookState {
   loading: boolean;
   items: Array<Book>;
   selectedBook: null | Book;
+  booksCount: number;
   error: string | null | undefined;
 }
 
@@ -23,6 +26,7 @@ const initialState: BookState = {
   loading: false,
   items: [],
   selectedBook: null,
+  booksCount: 0,
   error: null,
 };
 
@@ -53,11 +57,11 @@ export const updateBookByIdAsync = createAsyncThunk(
       if (response?.success) {
         return { response: response?.book, _id: updateData.bookId };
       }
-      console.error(response?.message)
+      console.error(response?.message);
       throw new Error(response?.message);
     } catch (error) {
       if (error instanceof Error) {
-        console.error(error.message)
+        console.error(error.message);
         throw new Error(error.message);
       } else {
         throw new Error("An error occurred");
@@ -68,11 +72,11 @@ export const updateBookByIdAsync = createAsyncThunk(
 
 export const fetchAllBooksAsync = createAsyncThunk(
   "book/fetchAllBooks",
-  async () => {
+  async (pagination: IPaginationQuery) => {
     try {
-      const response = await fetchAllBooks();
+      const response = await fetchAllBooks(pagination);
       if (response?.success) {
-        return response?.books;
+        return { books: response?.books, count: response?.totalDocsCount };
       }
       throw new Error(response?.message);
     } catch (error) {
@@ -125,11 +129,11 @@ export const deleteBookByIdAsync = createAsyncThunk(
 
 export const searchBookByTitleOrAuthorAsync = createAsyncThunk(
   "book/searchBookByTitleOrAuthor",
-  async (searchInput: string) => {
+  async (searchData: searchObj) => {
     try {
-      const response = await searchBookByTitleOrAuthor(searchInput);
+      const response = await searchBookByTitleOrAuthor(searchData);
       if (response?.success) {
-        return response.books;
+        return { books: response.books, count: response.totalDocsCount };
       }
       throw new Error(response?.message);
     } catch (error) {
@@ -184,7 +188,8 @@ export const bookSlice = createSlice({
       })
       .addCase(fetchAllBooksAsync.fulfilled, (state, action) => {
         state.loading = false;
-        state.items = action.payload;
+        state.items = action.payload.books;
+        state.booksCount = action.payload.count;
       })
       .addCase(fetchAllBooksAsync.rejected, (state, action) => {
         state.loading = false;
@@ -225,7 +230,8 @@ export const bookSlice = createSlice({
       })
       .addCase(searchBookByTitleOrAuthorAsync.fulfilled, (state, action) => {
         state.loading = false;
-        state.items = action.payload
+        state.items = action.payload.books;
+        state.booksCount = action.payload.count;
       })
       .addCase(searchBookByTitleOrAuthorAsync.rejected, (state, action) => {
         state.loading = false;
@@ -236,5 +242,6 @@ export const bookSlice = createSlice({
 
 export const selectAllBooks = (state: RootState) => state?.book?.items;
 export const selectBook = (state: RootState) => state?.book?.selectedBook;
+export const selectBooksCount = (state: RootState) => state?.book?.booksCount;
 
 export default bookSlice.reducer;

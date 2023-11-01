@@ -7,6 +7,7 @@ import {
   searchBookByTitleOrAuthorAsync,
   selectAllBooks,
   selectBook,
+  selectBooksCount,
 } from "../bookSlice";
 import { BsPencilSquare } from "react-icons/bs";
 import { AiFillCloseCircle, AiFillDelete, AiFillEye } from "react-icons/ai";
@@ -19,18 +20,24 @@ import { Link } from "react-router-dom";
 export function BookListing() {
   const dispatch = useAppDispatch();
   const books = useAppSelector(selectAllBooks);
-  const book: Book | null = useAppSelector(selectBook);
+  const book = useAppSelector(selectBook);
+  const BooksCount: number = useAppSelector(selectBooksCount);
 
   const [open, setOpen] = useState(false);
   const [bookId, setBookId] = useState("");
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [searchInput, setSearchInput] = useState("");
+  const [page, setPage] = useState(1);
+  const [limit, setLimit] = useState(5);
 
   const cancelButtonRef = useRef(null);
 
+  const pagination = { page, limit };
+
   useEffect(() => {
-    dispatch(fetchAllBooksAsync());
-  }, [dispatch]);
+    dispatch(fetchAllBooksAsync(pagination));
+    //eslint-disable-next-line
+  }, [dispatch, page, limit]);
 
   const handleBookDelete = (bookId: string) => {
     dispatch(deleteBookByIdAsync(bookId));
@@ -41,8 +48,10 @@ export function BookListing() {
     setIsModalOpen(true);
   };
 
+  const searchObj = {searchInput, page, limit}
+
   const handleSearchBook = () => {
-    dispatch(searchBookByTitleOrAuthorAsync(searchInput));
+    dispatch(searchBookByTitleOrAuthorAsync(searchObj));
   };
 
   return (
@@ -61,13 +70,23 @@ export function BookListing() {
               <Link to={"/create-book"}>Create Book</Link>
             </button>
           </div>
+
+          {/* Search input and and control page limit */}
           <div className="my-2 flex sm:flex-row flex-col">
             <div className="flex flex-row mb-1 sm:mb-0">
               <div className="relative">
-                <select className="appearance-none h-full rounded-l border block w-full bg-white border-gray-400 text-gray-700 py-2 px-4 pr-8 leading-tight focus:outline-none focus:bg-white focus:border-gray-500">
-                  <option>5</option>
-                  <option>10</option>
-                  <option>20</option>
+                <select
+                  onChange={(e: React.ChangeEvent<HTMLSelectElement>) =>
+                    setLimit(parseInt(e.target.value, 10))
+                  }
+                  className="appearance-none h-full rounded-l border block w-full bg-white border-gray-400 text-gray-700 py-2 px-4 pr-8 leading-tight focus:outline-none focus:bg-white focus:border-gray-500"
+                >
+                  <option value={5}>5</option>
+                  <option value={10}>10</option>
+                  <option value={25}>25</option>
+                  <option value={50}>50</option>
+                  <option value={75}>75</option>
+                  <option value={100}>100</option>
                 </select>
                 <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-700">
                   <svg
@@ -298,6 +317,35 @@ export function BookListing() {
                   </div>
                 </div>
               </ReactModal>
+
+              {/* Pagination */}
+              <div className="px-5 py-5 bg-white border-t flex flex-col xs:flex-row items-center xs:justify-between          ">
+                <span className="text-xs xs:text-sm text-gray-900">
+                  Showing {(page - 1) * limit + 1} to{" "}
+                  {page * limit > BooksCount ? BooksCount : page * limit} of{" "}
+                  {BooksCount} Entries
+                </span>
+                <div className="inline-flex mt-2 xs:mt-0">
+                  <button
+                    onClick={() => setPage(page - 1)}
+                    type="button"
+                    className="text-sm bg-gray-300 hover:bg-gray-400 text-gray-800 font-semibold py-2 px-4 rounded-l"
+                    disabled={page === 1 ? true : false}
+                  >
+                    Prev
+                  </button>
+                  <button
+                    onClick={() => setPage(page + 1)}
+                    type="button"
+                    className="text-sm bg-gray-300 hover:bg-gray-400 text-gray-800 font-semibold py-2 px-4 rounded-r"
+                    disabled={
+                      Math.ceil(BooksCount / page) <= limit ? true : false
+                    }
+                  >
+                    Next
+                  </button>
+                </div>
+              </div>
             </div>
           </div>
         </div>

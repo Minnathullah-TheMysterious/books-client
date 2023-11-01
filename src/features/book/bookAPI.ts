@@ -5,6 +5,7 @@ import { IUpdateBookParams } from "./components/UpdateBook";
 interface BookResponseData {
   success: boolean;
   message: string;
+  totalDocsCount: number;
   books: Book[];
 }
 
@@ -32,6 +33,17 @@ export interface ICreateBook {
   title: string;
   author: string;
   summary: string;
+}
+
+export interface IPaginationQuery {
+  page: number;
+  limit: number;
+}
+
+export interface searchObj {
+  searchInput: string;
+  page: number;
+  limit: number;
 }
 
 /**************Create Book || POST************* */
@@ -136,10 +148,12 @@ export const updateBookById = async (
 };
 
 /**************Fetch All Books || GET************* */
-export const fetchAllBooks = async (): Promise<BookResponseData> => {
+export const fetchAllBooks = async (
+  pagination: IPaginationQuery
+): Promise<BookResponseData> => {
   try {
     const response = await axios.get<BookResponseData>(
-      "/api/v1/book/fetch-all"
+      `/api/v1/book/fetch-all?page=${pagination.page}&limit=${pagination.limit}`
     );
     return response.data;
   } catch (error: any) {
@@ -148,11 +162,17 @@ export const fetchAllBooks = async (): Promise<BookResponseData> => {
       return {
         success: false,
         message: error.response.data.message,
+        totalDocsCount: 0,
         books: [],
       };
     }
     toast.error(error.message);
-    return { success: false, message: error.message, books: [] };
+    return {
+      success: false,
+      message: error.message,
+      totalDocsCount: 0,
+      books: [],
+    };
   }
 };
 
@@ -240,12 +260,12 @@ export const deleteBookById = async (
 
 /**************Search Book By Title or Author || POST************* */
 export const searchBookByTitleOrAuthor = async (
-  searchInput: string
+  searchData: searchObj
 ): Promise<BookResponseData> => {
   try {
-    const response = await axios.post<BookResponseData>(
-      `/api/v1/book/search`, {searchInput}
-    );
+    const response = await axios.post<BookResponseData>(`/api/v1/book/search?page=${searchData.page}&limit=${searchData.limit}`, {
+      searchInput: searchData.searchInput,
+    });
 
     if (response?.data?.success) {
       toast.success(response?.data?.message);
@@ -260,6 +280,7 @@ export const searchBookByTitleOrAuthor = async (
       return {
         success: false,
         message: error.response.data.message,
+        totalDocsCount: 0,
         books: [],
       };
     } else if (error?.response?.status === 404) {
@@ -267,6 +288,7 @@ export const searchBookByTitleOrAuthor = async (
       return {
         success: false,
         message: error.response.data.message,
+        totalDocsCount: 0,
         books: [],
       };
     }
@@ -280,6 +302,7 @@ export const searchBookByTitleOrAuthor = async (
       message:
         error.response.data.message ||
         "Something Went Wrong while searching the book",
+      totalDocsCount: 0,
       books: [],
     };
   }
