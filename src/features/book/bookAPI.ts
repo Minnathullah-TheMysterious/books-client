@@ -217,9 +217,7 @@ export const deleteBookById = async (
         success: false,
         message: error.response.data.message,
       };
-    }
-
-    else if (error?.response?.status === 404) {
+    } else if (error?.response?.status === 404) {
       toast.error(error.response.data.message);
       return {
         success: false,
@@ -236,6 +234,53 @@ export const deleteBookById = async (
       message:
         error.response.data.message ||
         "Something Went Wrong while deleting the book",
+    };
+  }
+};
+
+/**************Search Book By Title or Author || POST************* */
+export const searchBookByTitleOrAuthor = async (
+  searchInput: string
+): Promise<BookResponseData> => {
+  try {
+    const response = await axios.post<BookResponseData>(
+      `/api/v1/book/search`, {searchInput}
+    );
+
+    if (response?.data?.success) {
+      toast.success(response?.data?.message);
+      return response.data;
+    }
+    return response.data;
+  } catch (error: any) {
+    if (error?.response?.status === 400) {
+      toast(error.response.data.message, {
+        className: "font-serif bg-blue-900 text-white",
+      });
+      return {
+        success: false,
+        message: error.response.data.message,
+        books: [],
+      };
+    } else if (error?.response?.status === 404) {
+      toast.error(error.response.data.message);
+      return {
+        success: false,
+        message: error.response.data.message,
+        books: [],
+      };
+    }
+
+    toast.error(
+      error.response.data.message ||
+        "Something Went Wrong while searching the book"
+    );
+    return {
+      success: false,
+      message:
+        error.response.data.message ||
+        "Something Went Wrong while searching the book",
+      books: [],
     };
   }
 };

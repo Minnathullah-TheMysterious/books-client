@@ -7,6 +7,7 @@ import {
   deleteBookById,
   fetchAllBooks,
   fetchBookById,
+  searchBookByTitleOrAuthor,
   updateBookById,
 } from "./bookAPI";
 import { IUpdateBookParams } from './components/UpdateBook';
@@ -122,6 +123,25 @@ export const deleteBookByIdAsync = createAsyncThunk(
   }
 );
 
+export const searchBookByTitleOrAuthorAsync = createAsyncThunk(
+  "book/searchBookByTitleOrAuthor",
+  async (searchInput: string) => {
+    try {
+      const response = await searchBookByTitleOrAuthor(searchInput);
+      if (response?.success) {
+        return response.books;
+      }
+      throw new Error(response?.message);
+    } catch (error) {
+      if (error instanceof Error) {
+        throw new Error(error.message);
+      } else {
+        throw new Error("An error occurred");
+      }
+    }
+  }
+);
+
 export const bookSlice = createSlice({
   name: "book",
   initialState,
@@ -196,6 +216,18 @@ export const bookSlice = createSlice({
         }
       })
       .addCase(deleteBookByIdAsync.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.error.message;
+      })
+
+      .addCase(searchBookByTitleOrAuthorAsync.pending, (state) => {
+        state.loading = true;
+      })
+      .addCase(searchBookByTitleOrAuthorAsync.fulfilled, (state, action) => {
+        state.loading = false;
+        state.items = action.payload
+      })
+      .addCase(searchBookByTitleOrAuthorAsync.rejected, (state, action) => {
         state.loading = false;
         state.error = action.error.message;
       });
